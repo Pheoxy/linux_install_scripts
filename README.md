@@ -1,1 +1,8 @@
-# linux_install_script
+# Linux Install Script
+
+Here I have my linux install scripts.
+
+Choose your Distribution and click download
+## Distribution
+- Archlinux
+![download_now](./images/download_now.png width="50%")
