@@ -3,6 +3,11 @@
 Here I have my linux install scripts.
 
 Choose your Distribution and click download
-## Distribution
-- Archlinux
-![download_now](./images/download_now.png)
+
+
+
+| Distribution||
+| ------------- |:------------------------------------------:|
+| Archlinux     | [![download_now](./images/download_now.png)](./install/archlinux/install.sh) |
+| col 2 is      | centered      |
+| zebra stripes | are neat      |
