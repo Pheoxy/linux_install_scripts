@@ -20,7 +20,7 @@ DISK='/dev/sda'
 # Boot
 BOOT_PART=300M
 # Root
-ROOT_PART=20G
+ROOT_PART=10G
 # Home
 HOME_PART=
 
@@ -58,9 +58,10 @@ DISPLAY='gnome'
 startup() {
   printf "\nChecking your Configuration... \n
 
-==========================================================================================
-Its recommened to run 'lsblk' to check disk location to prevent unintentional data loss.
-==========================================================================================
+==============================================
+Its recommened to run 'lsblk' to check disk
+location to prevent unintentional data loss.
+==============================================
 
   Distribution | $DISTRO
   Disk         | $DISK
@@ -73,7 +74,8 @@ Its recommened to run 'lsblk' to check disk location to prevent unintentional da
   Graphics     | $GRAPHICS
   Display      | $DISPLAY
   \n"
-
+  lsblk
+  echo
   read -p "Is this correct? (y/n):  " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]
@@ -88,28 +90,71 @@ Its recommened to run 'lsblk' to check disk location to prevent unintentional da
 
 setup() {
   parition
-  echo 'Done!'
-  echo 'Updating Mirrorlist...'
-#  mirrorlist_update
-  echo 'Done!'
-# echo 'Setting Timezone...'
-#  echo 'Done!'
-  echo
-  exit 0
+  format_partition
+  mount_partition
+  mirrorlist_update
+  set_timezone
+  install_base
+  chroot
 }
 
 configuration() {
-  echoPartitioning...
-
+  echo "Installing..."
 }
 
 set_timezone(){
-  echo 'test Timezone'
+  echo
+  echo 'Setting Timezone...'
+  echo 'Done!'
 }
 
 mirrorlist_update() {
+  echo
+  echo 'Updating Mirrorlist...'
+  rm /etc/pacman.d/mirrorlist
   wget https://www.archlinux.org/mirrorlist/?country=$MIRROR -O /etc/pacman.d/mirrorlist
   sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist
+  echo 'Done!'
+}
+
+format_partition() {
+  echo
+  echo "Formatting partitions..."
+  echo
+  if [ $efi_status=TRUE ]
+    then
+      mkfs.ext4 /dev/sda1
+      y
+      mkfs.ext4 /dev/sda2
+      y
+    else
+      echo
+      mkfs.fat -F32 /dev/sda1
+      y
+      mkfs.ext4 /dev/sda2
+      y
+  fi
+  echo 'Done!'
+}
+
+mount_partition() {
+  echo
+  echo "Mounting disks..."
+  echo
+  mount /dev/sda2 /mnt
+  mkdir /mnt/boot
+  mount /dev/sda1 /mnt/boot
+  echo
+  echo "Partition mount successful!"
+}
+
+install_base() {
+  pacstrap /mnt base base-devel
+  genfstab -U /mnt >> /mnt/etc/fstab
+}
+
+chroot() {
+  arch-chroot /mnt
 }
 
 parition() {
@@ -127,12 +172,13 @@ parition() {
   if [ $efi_status=TRUE ]
   then
     echo "Partitioning for BIOS..."
-    #parted $DISK mklabel msdos
-    # echo -e "n\np\n\n\n+$BOOT_PART\na\nw" | fdisk $DISK
-    # sleep 1
-    # echo -e "n\np\n\n\n+$ROOT_PART\na\nw" | fdisk $DISK
+    parted $DISK mklabel msdos
+    echo -e "n\np\n\n\n+$BOOT_PART\na\nw" | fdisk $DISK
+    sleep 1
+    echo -e "n\np\n\n\n+$ROOT_PART\na\nw" | fdisk $DISK
   else
     echo "Partitioning for EFI..."
+    echo "Error 1: Work in progress..."
     exit 1
   fi
 }

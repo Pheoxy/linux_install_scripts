@@ -25,11 +25,10 @@ start() {
     else
       echo
       "Starting arch_install.sh script..."
-      wget pheoxy.com/linux/arch_install.sh
+      wget pheoxy.com/archlinux/install.sh
       chmod u+x ./arch_install.sh
       ./arch_install.sh
   fi
-  #nano /etc/netctl/eno1
 }
 
 reboot() {
