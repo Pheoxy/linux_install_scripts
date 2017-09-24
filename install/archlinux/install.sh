@@ -28,7 +28,7 @@ ROOT_PART=10G
 ENCRYPTION='No'
 
 # Download mirror location, use your country code.
-MIRRORLIST='AU'
+MIRROR='AU'
 
 # Keymap.
 KEYMAP='us'
@@ -92,69 +92,14 @@ setup() {
   parition
   format_partition
   mount_partition
-  # mirrorlist_update
-  # set_timezone
-  # install_base
-  # chroot
+  mirrorlist_update
+  install_base
+  chroot
+#  set_timezone
 }
 
 configuration() {
   echo "Installing..."
-}
-
-set_timezone(){
-  echo
-  echo 'Setting Timezone...'
-  echo 'Done!'
-}
-
-mirrorlist_update() {
-  echo
-  echo 'Updating Mirrorlist...'
-  rm /etc/pacman.d/mirrorlist
-  wget https://www.archlinux.org/mirrorlist/?country=$MIRROR -O /etc/pacman.d/mirrorlist
-  sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist
-  echo 'Done!'
-}
-
-format_partition() {
-  echo
-  echo "Formatting partitions..."
-  echo
-  if [ $efi_status=TRUE ]
-    then
-      mkfs.ext4 /dev/sda1
-      y
-      mkfs.ext4 /dev/sda2
-      y
-    else
-      echo
-      mkfs.fat -F32 /dev/sda1
-      y
-      mkfs.ext4 /dev/sda2
-      y
-  fi
-  echo 'Done!'
-}
-
-mount_partition() {
-  echo
-  echo "Mounting disks..."
-  echo
-  mount /dev/sda2 /mnt
-  mkdir /mnt/boot
-  mount /dev/sda1 /mnt/boot
-  echo
-  echo "Partition mount successful!"
-}
-
-install_base() {
-  pacstrap /mnt base base-devel
-  genfstab -U /mnt >> /mnt/etc/fstab
-}
-
-chroot() {
-  arch-chroot /mnt
 }
 
 parition() {
@@ -176,7 +121,8 @@ parition() {
     mklabel msdos \
     mkpart primary ext4 1 $BOOT_PART \
     mkpart primary ext4 $BOOT_PART $ROOT_PART \
-    set 1 boot on \
+    set 1 boot on
+    echo "Done!"
 
   else
     echo "Partitioning for EFI..."
@@ -184,6 +130,72 @@ parition() {
     exit 1
   fi
 }
+
+format_partition() {
+  echo
+  echo "Formatting partitions..."
+  echo
+  if [ $efi_status=TRUE ]
+    then
+      yes | mkfs.ext4 /dev/sda1
+      yes | mkfs.ext4 /dev/sda2
+    else
+      echo
+      mkfs.fat -F32 /dev/sda1
+      y
+      mkfs.ext4 /dev/sda2
+      y
+  fi
+  echo 'Done!'
+}
+
+mount_partition() {
+  echo
+  echo "Mounting disks..."
+  echo
+  mount /dev/sda2 /mnt
+  mkdir /mnt/boot
+  mount /dev/sda1 /mnt/boot
+  echo
+  echo "Partition mount successful!"
+}
+
+mirrorlist_update() {
+  echo
+  echo 'Updating Mirrorlist...'
+  rm /etc/pacman.d/mirrorlist
+  wget https://www.archlinux.org/mirrorlist/?country=$MIRROR -O /etc/pacman.d/mirrorlist
+  sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist
+  echo 'Done!'
+}
+
+set_timezone(){
+  echo
+  echo 'Setting Timezone...'
+  ln -sf /usr/share/zoneinfo/Australia/Perth /etc/localtime
+  hwclock --systohc
+#  nano /etc/locale.gen
+#  nano /etc/locale.conf
+#  LANG=en_AU.UTF-8
+#  locale-gen
+  echo 'Done!'
+}
+
+install_base() {
+  pacstrap /mnt base base-devel
+  genfstab -U /mnt >> /mnt/etc/fstab
+}
+
+chroot() {
+  arch-chroot /mnt
+}
+
+# Is root running.
+if [ "`id -u`" -ne 0 ]
+then
+  echo -e "\n\nRun as root!\n\n"
+  exit -1
+fi
 
 startup
 exit 0
