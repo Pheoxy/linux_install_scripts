@@ -16,7 +16,7 @@ start() {
   sleep 1
   echo "Done!"
   echo
-  read -p "Autorun arch_install.sh script? (y/n):  " -n 1 -r
+  read -p "Autorun install.sh script? (y/n):  " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]
     then
@@ -24,10 +24,18 @@ start() {
       reboot
     else
       echo
-      "Starting arch_install.sh script..."
+      echo "Starting install.sh script..."
+      mount -o remount,size=2G /run/archiso/cowspace
+      #wget https://raw.githubusercontent.com/Pheoxy/linux_install_scripts/master/install/archlinux/install.sh
       wget pheoxy.com/archlinux/install.sh
-      chmod u+x ./arch_install.sh
-      ./arch_install.sh
+      chmod +x install.sh
+      ./install.sh
+      # pacman -Sy git
+      # y
+      # git clone git://github.com/Pheoxy/linux_install_scripts
+      # cd linux_install_scripts/
+      #chmod +x ./install/archlinux/install.sh
+      # ./install/archlinux/install.sh
   fi
 }
 

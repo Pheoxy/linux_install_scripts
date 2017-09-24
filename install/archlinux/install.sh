@@ -19,10 +19,10 @@ DISK='/dev/sda'
 # Partitioning
 # Boot
 BOOT_PART=300M
-# Root
+# Root 100% or 20G
 ROOT_PART=10G
 # Home
-HOME_PART=
+#HOME_PART="Not supported yet"
 
 # Encrypt disk but leave boot parition (Yes/No).
 ENCRYPTION='No'
@@ -92,10 +92,10 @@ setup() {
   parition
   format_partition
   mount_partition
-  mirrorlist_update
-  set_timezone
-  install_base
-  chroot
+  # mirrorlist_update
+  # set_timezone
+  # install_base
+  # chroot
 }
 
 configuration() {
@@ -172,10 +172,12 @@ parition() {
   if [ $efi_status=TRUE ]
   then
     echo "Partitioning for BIOS..."
-    parted $DISK mklabel msdos
-    echo -e "n\np\n\n\n+$BOOT_PART\na\nw" | fdisk $DISK
-    sleep 1
-    echo -e "n\np\n\n\n+$ROOT_PART\na\nw" | fdisk $DISK
+    parted -s "$DISK" \
+    mklabel msdos \
+    mkpart primary ext4 1 $BOOT_PART \
+    mkpart primary ext4 $BOOT_PART $ROOT_PART \
+    set 1 boot on \
+
   else
     echo "Partitioning for EFI..."
     echo "Error 1: Work in progress..."
