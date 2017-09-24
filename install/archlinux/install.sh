@@ -59,20 +59,17 @@ startup() {
   printf "\nChecking your Configuration... \n
 
 ==============================================
-Its recommened to run 'lsblk' to check disk
-location to prevent unintentional data loss.
-==============================================
-
   Distribution | $DISTRO
   Disk         | $DISK
   Encryption   | $ENCRYPTION
-  Mirrorlist   | $MIRRORLIST
+  Mirrorlist   | $MIRROR
   Keymap       | $KEYMAP
   Hostname     | $HOSTNAME
   Timezone     | $TIMEZONE
   User         | $USER
   Graphics     | $GRAPHICS
   Display      | $DISPLAY
+==============================================
   \n"
   lsblk
   echo
@@ -93,9 +90,13 @@ setup() {
   format_partition
   mount_partition
   mirrorlist_update
+  set_timezone
+#  set_locale
+#  set_hostname
   install_base
   chroot
-#  set_timezone
+  install_network
+  install_boot
 }
 
 configuration() {
@@ -141,10 +142,8 @@ format_partition() {
       yes | mkfs.ext4 /dev/sda2
     else
       echo
-      mkfs.fat -F32 /dev/sda1
-      y
-      mkfs.ext4 /dev/sda2
-      y
+      yes | mkfs.fat -F32 /dev/sda1
+      yes | mkfs.ext4 /dev/sda2
   fi
   echo 'Done!'
 }
@@ -162,7 +161,7 @@ mount_partition() {
 
 mirrorlist_update() {
   echo
-  echo 'Updating Mirrorlist...'
+  echo 'Updating mirrorlist...'
   rm /etc/pacman.d/mirrorlist
   wget https://www.archlinux.org/mirrorlist/?country=$MIRROR -O /etc/pacman.d/mirrorlist
   sed -i 's/^#Server/Server/' /etc/pacman.d/mirrorlist
@@ -171,23 +170,73 @@ mirrorlist_update() {
 
 set_timezone(){
   echo
-  echo 'Setting Timezone...'
-  ln -sf /usr/share/zoneinfo/Australia/Perth /etc/localtime
+  echo 'Setting timezone...'
+  ln -sf /usr/share/zoneinfo/$TIMEZONE /etc/localtime
   hwclock --systohc
-#  nano /etc/locale.gen
-#  nano /etc/locale.conf
-#  LANG=en_AU.UTF-8
-#  locale-gen
   echo 'Done!'
 }
 
+set_locale() {
+  echo
+  echo 'Setting locale...'
+  sed -i "s/^#$LOCALE/$LOCALE/" /etc/locale.gen
+#  nano /etc/locale.conf
+#  echo -e "LANG=$LOCALE"
+  locale-gen
+  echo "Done!"
+}
+
+set_hostname() {
+  echo
+  echo 'Setting hostname...'
+#  nano /etc/hostname
+#  $HOSTNAME
+#  echo -e "#
+# /etc/hosts: static lookup table for host names
+#
+
+#<ip-address>   <hostname.domain.org>   <hostname>
+127.0.0.1       localhost.localdomain   localhost
+::1             localhost.localdomain   localhost
+127.0.0.1       $HOSTNAME.localdomain   $HOSTNAME
+
+# End of file" >> /etc/hosts
+  echo "Done!"
+}
+
+
 install_base() {
+  echo
+  echo 'Installing base...'
   pacstrap /mnt base base-devel
   genfstab -U /mnt >> /mnt/etc/fstab
+  echo
+  echo "Done!"
 }
 
 chroot() {
+  echo
+  echo 'Entering chroot...'
   arch-chroot /mnt
+}
+
+install_network() {
+  echo
+  echo 'Installing network...'
+  pacman -S networkmanager
+  systemctl enable NetworkManager.service
+  echo
+  echo "Done!"
+}
+
+install_boot() {
+  echo
+  echo 'Installing boot...'
+  pacman -Sy grub
+  grub-install --target=i386-pc $DISK
+  grub-mkconfig -o /boot/grub/grub.cfg
+  echo
+  echo "Done!"
 }
 
 # Is root running.
@@ -198,4 +247,19 @@ then
 fi
 
 startup
-exit 0
+
+echo
+printf "\n==============================================
+          Install finished, restarting in 5 seconds...
+          ==============================================\n"
+echo "5"
+wait 1
+echo "4"
+wait 1
+echo "3"
+wait 1
+echo "2"
+wait 1
+echo "1"
+wait 1
+reboot
