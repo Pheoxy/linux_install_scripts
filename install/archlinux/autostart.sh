@@ -26,8 +26,8 @@ start() {
       echo
       echo "Starting install.sh script..."
       mount -o remount,size=2G /run/archiso/cowspace
-      #wget https://raw.githubusercontent.com/Pheoxy/linux_install_scripts/master/install/archlinux/install.sh
-      wget pheoxy.com/archlinux/install.sh
+      wget https://raw.githubusercontent.com/Pheoxy/linux_install_scripts/master/install/archlinux/install.sh
+      # wget pheoxy.com/archlinux/install.sh
       chmod +x install.sh
       ./install.sh
       # pacman -Sy git
