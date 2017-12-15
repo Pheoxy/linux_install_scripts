@@ -52,7 +52,6 @@ GRAPHICS="virtualbox-guest-utils"
 
 # Display Enviroment
 DISPLAY='gnome'
-#}
 
 startup() {
   printf "\nChecking your Configuration... \n
